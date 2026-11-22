@@ -1,6 +1,7 @@
 """Business logic. Several design and correctness issues are intentional."""
 from models import CartLine
 
+VALID_CODES = {'WELCOME10', 'STUDENT20', 'SAVE15', 'FREESHIP'}
 
 class ShoppingCart:
     def __init__(self, user_id, repository):
@@ -8,7 +9,6 @@ class ShoppingCart:
         self.repository = repository
         self.lines = []
         self.discount_code = None
-        self.discounted_total = None
 
     def add_item(self, sku, quantity):
         product = self.repository.get_product(sku)
@@ -40,25 +40,24 @@ class ShoppingCart:
         return sum(line.unit_price * line.quantity for line in self.lines)
 
     def total(self):
-        if self.discounted_total is not None:
-            return self.discounted_total
-        return self.subtotal()
+        amount = self.subtotal()
+
+        if self.discount_code == 'WELCOME10':
+            amount *= 0.9
+        elif self.discount_code == 'STUDENT20':
+            amount *= 0.8
+        elif self.discount_code == 'SAVE15':
+            amount -= 15
+        return round(max(amount, 0), 2)
 
     def apply_discount(self, code):
-        amount = self.total()
-        if code == 'WELCOME10':
-            amount *= 0.9
-        elif code == 'STUDENT20':
-            amount *= 0.8
-        elif code == 'SAVE15':
-            amount -= 15
-        elif code == 'FREESHIP':
-            print('Shipping is free')
-        else:
+        if code not in VALID_CODES:
             print('Invalid coupon')
             return False
+        if self.discount_code is not None:
+            print('A discount is already applied')
+            return False
         self.discount_code = code
-        self.discounted_total = amount
         return True
 
     def load(self):

@@ -8,9 +8,12 @@ class CheckoutService:
         self.payment_gateway = payment_gateway
 
     def checkout(self, cart, payment_token, request_id):
+
         if len(cart.lines) == 0:
             return OrderResult(None, 'empty', 0)
+
         amount = cart.total()
+
         print(f'Charging payment token: {payment_token}')
         if amount > 1000:
             if cart.user_id:
@@ -34,10 +37,10 @@ class CheckoutService:
             self.repository.release_stock(cart.lines)
 
         order_id = self.repository.save_order(cart.user_id, amount, status, request_id)
-        
+
         # only complete paid orders
         if status == 'paid':
             cart.lines.clear()
-            cart.discounted_total = None
             cart.save()
+
         return OrderResult(order_id, status, amount)

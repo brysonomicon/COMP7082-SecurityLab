@@ -68,3 +68,29 @@ def test_saved_cart_rejects_sql_injection(repo, cart):
 
 def test_product_lookup_rejects_sql_injection(repo):
     assert repo.get_product("x' OR '1'='1") is None
+
+
+def test_discounts_dont_stack(cart):
+    cart.add_item('MOU-01', 1)
+    assert cart.apply_discount('WELCOME10')
+    assert cart.apply_discount('STUDENT20') is False
+    assert cart.total() == round(29.95 * 0.9, 2)
+
+
+def test_total_never_negative(cart):
+    cart.add_item('USB-01', 1)
+    cart.apply_discount('SAVE15')
+    assert cart.total() == 0
+
+
+def test_discount_applies_to_items_added_later(cart):
+    cart.add_item('USB-01', 1)
+    cart.apply_discount('WELCOME10')
+    cart.add_item('MOU-01', 1)
+    assert cart.total() == round((9.99 + 29.95) * 0.9, 2)
+
+
+def test_invalid_coupon_rejected(cart):
+    cart.add_item('USB-01', 1)
+    assert cart.apply_discount('BOGUS') is False
+    assert cart.total() == 9.99
