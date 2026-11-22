@@ -49,6 +49,7 @@ def test_stock_is_never_negative(repo):
 
     assert repo.get_product('MOU-01').stock >= 0
 
+
 def test_reserve_is_all_or_nothing(repo):
     lines = [
         CartLine('MOU-01', 'Wireless mouse', 29.95, 2),
@@ -57,3 +58,13 @@ def test_reserve_is_all_or_nothing(repo):
 
     assert repo.reserve_stock(lines) is False
     assert repo.get_product('MOU-01').stock == 20
+
+
+def test_saved_cart_rejects_sql_injection(repo, cart):
+    cart.add_item('MOU-01', 1)
+    cart.save()
+    assert repo.get_saved_cart("x' OR '1'=1") == []
+
+
+def test_product_lookup_rejects_sql_injection(repo):
+    assert repo.get_product("x' OR '1'='1") is None
