@@ -8,8 +8,8 @@ class CheckoutService:
         self.payment_gateway = payment_gateway
 
     def checkout(self, cart, payment_token, request_id):
-        if not request_id:
-            return OrderResult(None, 'missing_request_id', 0)
+        # if not request_id:
+        #     return OrderResult(None, 'missing_request_id', 0)
 
         existing = self.repository.find_order_by_request_id(request_id)
         if existing:
