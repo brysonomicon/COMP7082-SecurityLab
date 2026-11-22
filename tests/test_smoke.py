@@ -116,3 +116,11 @@ def test_missing_request_id_is_rejected(repo, cart):
 
     assert result.status == 'missing_request_id'
     assert gateway.calls == []
+
+
+def test_list_orders_only_returns_own_orders(repo):
+    repo.save_order('alice', 10, 'paid', 'req-a')
+    repo.save_order('bob', 20, 'paid', 'req-b')
+    rows = repo.list_orders('alice')
+
+    assert len(rows) == 1 and rows[0][1] == 'alice'
