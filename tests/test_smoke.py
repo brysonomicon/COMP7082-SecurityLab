@@ -94,3 +94,25 @@ def test_invalid_coupon_rejected(cart):
     cart.add_item('USB-01', 1)
     assert cart.apply_discount('BOGUS') is False
     assert cart.total() == 9.99
+
+
+def test_duplicate_request_id_charges_once(repo, cart):
+    gateway = FakePaymentGateway()
+    svc = CheckoutService(repo, gateway)
+    cart.add_item('MOU-01', 2)
+
+    first = svc.checkout(cart, 'tok_fake', 'req-1')
+    second = svc.checkout(cart, 'tok_fake', 'req-1')
+
+    assert len(gateway.calls) == 1
+    assert second.order_id == first.order_id
+    assert repo.get_product('MOU-01').stock == 18
+
+
+def test_missing_request_id_is_rejected(repo, cart):
+    gateway = FakePaymentGateway()
+    cart.add_item('MOU-01', 1)
+    result = CheckoutService(repo, gateway).checkout(cart, 'tok_fake', None)
+
+    assert result.status == 'missing_request_id'
+    assert gateway.calls == []

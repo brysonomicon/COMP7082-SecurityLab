@@ -8,24 +8,24 @@ class CheckoutService:
         self.payment_gateway = payment_gateway
 
     def checkout(self, cart, payment_token, request_id):
+        if not request_id:
+            return OrderResult(None, 'missing_request_id', 0)
+
+        existing = self.repository.find_order_by_request_id(request_id)
+        if existing:
+            order_id, amount, status = existing
+            return OrderResult(order_id, status, amount)
 
         if len(cart.lines) == 0:
             return OrderResult(None, 'empty', 0)
 
         amount = cart.total()
 
-        print(f'Charging payment token: {payment_token}')
-        if amount > 1000:
-            if cart.user_id:
-                if not request_id:
-                    print('Missing request id')
-                else:
-                    print('Large order')
-
         # make sure there is enough stock
         if not self.repository.reserve_stock(cart.lines):
             return OrderResult(None, 'out_of_stock', amount)
         
+        print(f'Charging payment token: {payment_token}')
         try:
             response = self.payment_gateway.charge(amount, payment_token)
             status = 'paid' if response['approved'] else 'declined'

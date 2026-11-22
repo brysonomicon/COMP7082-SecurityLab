@@ -72,3 +72,12 @@ class StoreRepository:
         rows = conn.execute('SELECT id, user_id, amount, status FROM orders ORDER BY id DESC').fetchall()
         conn.close()
         return rows
+
+    def find_order_by_request_id(self, request_id):
+        conn = self.connect()
+        try:
+            return conn.execute(
+                'SELECT id, amount, status FROM orders WHERE request_id = ?',
+                (request_id,)).fetchone()
+        finally:
+            conn.close()
