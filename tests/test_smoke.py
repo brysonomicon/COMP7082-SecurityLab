@@ -48,3 +48,12 @@ def test_stock_is_never_negative(repo):
     lines = [CartLine('MOU-01', 'Wireless mouse', 29.95, 21)]
 
     assert repo.get_product('MOU-01').stock >= 0
+
+def test_reserve_is_all_or_nothing(repo):
+    lines = [
+        CartLine('MOU-01', 'Wireless mouse', 29.95, 2),
+        CartLine('USB-01', 'USB cable', 9.99, 51),
+    ]
+
+    assert repo.reserve_stock(lines) is False
+    assert repo.get_product('MOU-01').stock == 20
