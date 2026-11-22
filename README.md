@@ -26,3 +26,7 @@ python demo.py
 ```
 
 Use temporary databases and fake payment tokens for unit tests. No real payment credentials are required.
+
+## DEFECTS.pdf
+
+1. Contains the list of fixed defects, associated tests, and successful/failed runs of main.yml
