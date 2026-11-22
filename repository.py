@@ -31,11 +31,33 @@ class StoreRepository:
         conn.commit()
         conn.close()
 
-    def update_stock(self, sku, quantity):
+    def reserve_stock(self, lines):
         conn = self.connect()
-        conn.execute('UPDATE products SET stock = stock - ? WHERE sku = ?', (quantity, sku))
-        conn.commit()
-        conn.close()
+        try:
+            for line in lines:
+                cur = conn.execute(
+                    'UPDATE products SET stock = stock - ? WHERE sku = ? AND STOCK >= ?',
+                    (line.quantity, line.sku, line.quantity)
+                )
+                if cur.rowcount == 0: # not enough stock or an unknown sku
+                    conn.rollback()   # undo earlier lines
+                    return False
+            
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+    
+    def release_stock(self, lines):
+        conn = self.connect()
+        try:
+            for line in lines:
+                conn.execute('UPDATE products SET stock = stock + ? WHERE sku = ?',
+                            (line.quantity, line.sku)
+                )
+            conn.commit()
+        finally:
+            conn.close()
 
     def save_order(self, user_id, amount, status, request_id):
         conn = self.connect()

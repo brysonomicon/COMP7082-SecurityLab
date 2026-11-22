@@ -19,18 +19,25 @@ class CheckoutService:
                 else:
                     print('Large order')
 
+        # make sure there is enough stock
+        if not self.repository.reserve_stock(cart.lines):
+            return OrderResult(None, 'out_of_stock', amount)
+        
         try:
             response = self.payment_gateway.charge(amount, payment_token)
             status = 'paid' if response['approved'] else 'declined'
         except Exception:
             status = 'payment_error'
 
-        # check is status is paid before decrementing stock
-        if status == 'paid':
-            for line in cart.lines:
-                self.repository.update_stock(line.sku, line.quantity)
+        # release stock from unpaid orders
+        if status != 'paid':
+            self.repository.release_stock(cart.lines)
+
         order_id = self.repository.save_order(cart.user_id, amount, status, request_id)
-        cart.lines.clear()
-        cart.discounted_total = None
-        cart.save()
+        
+        # only complete paid orders
+        if status == 'paid':
+            cart.lines.clear()
+            cart.discounted_total = None
+            cart.save()
         return OrderResult(order_id, status, amount)

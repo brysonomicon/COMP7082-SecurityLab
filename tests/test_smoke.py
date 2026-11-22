@@ -6,6 +6,7 @@ from repository import StoreRepository
 from cart import ShoppingCart
 from checkout import CheckoutService
 from payments import FakePaymentGateway
+from models import CartLine
 
 
 @pytest.fixture
@@ -44,6 +45,6 @@ def test_declined_payment_does_not_reduce_stock(repo, cart):
 
 
 def test_stock_is_never_negative(repo):
-    repo.update_stock('MOU-01', 21)
+    lines = [CartLine('MOU-01', 'Wireless mouse', 29.95, 21)]
 
     assert repo.get_product('MOU-01').stock >= 0
